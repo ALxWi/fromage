@@ -94,7 +94,7 @@ func UpdateFromStatements(content []byte, from name.Reference, to name.Reference
 	return result.Bytes(), updated
 }
 
-func UpdateAllFromStatements(content []byte, filename string, pin *tag.Level, latest bool, verbose bool) ([]byte, bool) {
+func UpdateAllFromStatements(content []byte, filename string, pin *tag.Level, latest bool, verbose bool, DockerHub bool) ([]byte, bool) {
 	result := false
 	refs := ExtractFromStatements(content)
 	var references = make([]name.Reference, 0, len(refs))
@@ -106,7 +106,7 @@ func UpdateAllFromStatements(content []byte, filename string, pin *tag.Level, la
 		references = append(references, ref)
 	}
 
-	bumper := MakeBumper(references, pin, latest)
+	bumper := MakeBumper(references, pin, latest, DockerHub)
 	for _, r := range bumper.bumpOrder {
 		from, _ := name.ParseReference(r)
 		to, _ := name.ParseReference(bumper.bumpReferences[r])

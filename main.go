@@ -30,6 +30,7 @@ type Fromage struct {
 	Verbose        bool
 	Pin            string
 	Latest         bool
+	DockerHub      bool
 	repository     *git.Repository
 	workTree       *git.Worktree
 	currentBranch  *plumbing.Reference
@@ -212,7 +213,7 @@ func ListAllReferences(f *Fromage) error {
 	for _, reference := range references {
 
 		var newer []string
-		if successors, err := tag.GetAllSuccessorsByString(reference, f.pin); err == nil {
+		if successors, err := tag.GetAllSuccessorsByString(reference, f.pin, f.DockerHub); err == nil {
 			newer = make([]string, 0, len(successors))
 			for _, v := range successors {
 				newer = append(newer, v.String())
@@ -236,7 +237,7 @@ func BumpReferences(f *Fromage) error {
 		return err
 	}
 
-	content, updated := UpdateAllFromStatements(content, f.dockerfile, f.pin, f.Latest, f.Verbose)
+	content, updated := UpdateAllFromStatements(content, f.dockerfile, f.pin, f.Latest, f.Verbose, f.DockerHub)
 	if updated {
 		f.updated = true
 		if !f.DryRun {
@@ -251,9 +252,9 @@ func main() {
 	usage := `fromage - checks, list and bumps all container references in Dockerfiles in a git repository
 
 Usage:
-  fromage list  [--verbose] [--format=FORMAT] [--no-header] [--only-references]  [--branch=BRANCH ...] URL
-  fromage check [--verbose] [--format=FORMAT] [--no-header] [--only-references]  [--branch=BRANCH ...] [--pin=LEVEL] URL
-  fromage bump  [--verbose] [--dry-run] [--pin=LEVEL] [--latest] --branch=BRANCH URL
+  fromage list  [--verbose] [--format=FORMAT] [--no-header] [--only-references]  [--branch=BRANCH ...] [--docker-hub] URL
+  fromage check [--verbose] [--format=FORMAT] [--no-header] [--only-references]  [--branch=BRANCH ...] [--pin=LEVEL] [--docker-hub] URL
+  fromage bump  [--verbose] [--dry-run] [--pin=LEVEL] [--latest] --branch=BRANCH [--docker-hub] URL
 
 Options:
 --branch=BRANCH     to inspect, defaults to all branches.
@@ -262,6 +263,7 @@ Options:
 --only-references   output only container image references.
 --pin=LEVEL         pins the MAJOR or MINOR version level
 --latest            bump to the latest version available
+--docker-hub        enforce check against dockerhub
 
 Description:
 list will iterate over all dockerfiles in all branches in the repository and print out all container

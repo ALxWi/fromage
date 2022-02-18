@@ -177,7 +177,7 @@ func TestGetNextVersions(t *testing.T) {
 			}
 			o = append(o, ref)
 		}
-		output, err := GetNextVersions(i, nil, false)
+		output, err := GetNextVersions(i, nil, false, false)
 		if test.error != (err != nil) {
 			t.Fatalf("expected error to be %v was %v", test.error, (err != nil))
 		}

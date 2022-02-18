@@ -254,9 +254,14 @@ func MakeTagCategories(tags Tags) TagCategories {
 	return result
 }
 
-func GetTagsFromCache(reference name.Tag) (Tags, error) {
+func GetTagsFromCache(reference name.Tag, DockerHub bool) (Tags, error) {
 	tag := MakeTag(reference.TagStr())
-	name := reference.Context().String()
+	var name string
+	if DockerHub {
+		name = reference.Repository.RepositoryStr()
+	} else {
+		name = reference.Context().String()
+	}
 	categories, ok := tagCategoryCache[name]
 	if !ok {
 		tagList, err := ListAllTags(name)
@@ -293,8 +298,8 @@ func updateIdentifier(reference name.Tag, identifier string) (next name.Tag) {
 	return next
 }
 
-func GetNextVersion(reference name.Tag, pin *Level, latest bool) (*name.Tag, error) {
-	tagList, err := GetTagsFromCache(reference)
+func GetNextVersion(reference name.Tag, pin *Level, latest bool, DockerHub bool) (*name.Tag, error) {
+	tagList, err := GetTagsFromCache(reference, DockerHub)
 	if err != nil {
 		log.Printf("WARNING: %s", err)
 		return &reference, err
@@ -334,13 +339,13 @@ func GetNextVersion(reference name.Tag, pin *Level, latest bool) (*name.Tag, err
 	return &reference, nil
 }
 
-func GetNextVersions(references []name.Reference, within *Level, latest bool) ([]name.Reference, error) {
+func GetNextVersions(references []name.Reference, within *Level, latest bool, DockerHub bool) ([]name.Reference, error) {
 	var errors = make([]error, 0)
 	var result = make([]name.Reference, 0, len(references))
 
 	for _, r := range references {
 		if ref, ok := r.(name.Tag); ok {
-			ref, err := GetNextVersion(ref, within, latest)
+			ref, err := GetNextVersion(ref, within, latest, DockerHub)
 			if err != nil {
 				errors = append(errors, err)
 			}
@@ -356,17 +361,17 @@ func GetNextVersions(references []name.Reference, within *Level, latest bool) ([
 	}
 }
 
-func GetAllSuccessorsByString(reference string, pin *Level) ([]Tag, error) {
+func GetAllSuccessorsByString(reference string, pin *Level, DockerHub bool) ([]Tag, error) {
 	if r, err := name.ParseReference(reference); err == nil {
-		return GetAllSuccessors(r, pin)
+		return GetAllSuccessors(r, pin, DockerHub)
 	} else {
 		return []Tag{}, err
 	}
 }
 
-func GetAllSuccessors(reference name.Reference, pin *Level) ([]Tag, error) {
+func GetAllSuccessors(reference name.Reference, pin *Level, DockerHub bool) ([]Tag, error) {
 	if r, ok := reference.(name.Tag); ok {
-		tagList, err := GetTagsFromCache(r)
+		tagList, err := GetTagsFromCache(r, DockerHub)
 		if err != nil {
 			return nil, err
 		}
